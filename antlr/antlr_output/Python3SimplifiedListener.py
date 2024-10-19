@@ -89,6 +89,42 @@ class Python3SimplifiedListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Python3SimplifiedParser#or_test.
+    def enterOr_test(self, ctx:Python3SimplifiedParser.Or_testContext):
+        pass
+
+    # Exit a parse tree produced by Python3SimplifiedParser#or_test.
+    def exitOr_test(self, ctx:Python3SimplifiedParser.Or_testContext):
+        pass
+
+
+    # Enter a parse tree produced by Python3SimplifiedParser#and_test.
+    def enterAnd_test(self, ctx:Python3SimplifiedParser.And_testContext):
+        pass
+
+    # Exit a parse tree produced by Python3SimplifiedParser#and_test.
+    def exitAnd_test(self, ctx:Python3SimplifiedParser.And_testContext):
+        pass
+
+
+    # Enter a parse tree produced by Python3SimplifiedParser#not_test.
+    def enterNot_test(self, ctx:Python3SimplifiedParser.Not_testContext):
+        pass
+
+    # Exit a parse tree produced by Python3SimplifiedParser#not_test.
+    def exitNot_test(self, ctx:Python3SimplifiedParser.Not_testContext):
+        pass
+
+
+    # Enter a parse tree produced by Python3SimplifiedParser#comparison.
+    def enterComparison(self, ctx:Python3SimplifiedParser.ComparisonContext):
+        pass
+
+    # Exit a parse tree produced by Python3SimplifiedParser#comparison.
+    def exitComparison(self, ctx:Python3SimplifiedParser.ComparisonContext):
+        pass
+
+
     # Enter a parse tree produced by Python3SimplifiedParser#if_stmt.
     def enterIf_stmt(self, ctx:Python3SimplifiedParser.If_stmtContext):
         pass

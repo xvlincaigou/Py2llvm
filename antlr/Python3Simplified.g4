@@ -1,7 +1,7 @@
 grammar Python3Simplified;
 
 // Parser Rules
-program: (NEWLINE | statement)*;
+program: (NEWLINE | statement)* EOF;
 
 statement
     : INDENT* simple_stmt
@@ -32,8 +32,24 @@ expr_stmt: expr;
 return_stmt: RETURN expr;
 
 test
+    : or_test
+    ;
+
+or_test
+    : and_test (OR and_test)*
+    ;
+
+and_test
+    : not_test (AND not_test)*
+    ;
+
+not_test
+    : NOT not_test
+    | comparison
+    ;
+
+comparison
     : expr (comp_op expr)*
-    | expr (AND expr | OR expr)*
     ;
 
 if_stmt: IF test ':' suite (ELIF test ':' suite)* (ELSE ':' suite)?;
@@ -84,6 +100,7 @@ DEF: 'def';
 RETURN: 'return';
 AND: 'and';
 OR: 'or';
+NOT: 'not';
 
 // NAME should come after the keywords
 NAME: [a-zA-Z_][a-zA-Z0-9_]*;

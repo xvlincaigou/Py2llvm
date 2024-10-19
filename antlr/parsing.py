@@ -37,13 +37,12 @@ token_stream = CommonTokenStream(lexer)
 token_stream.fill()
 
 # 打印所有的 tokens
-for token in token_stream.getTokens(start=0, stop=token_stream.__sizeof__()):
+for token in token_stream.getTokens(start=0, stop=1000):
     print(token)
 
 parser = Python3SimplifiedParser(token_stream)
 tree = parser.program()
 print(tree.toStringTree(recog=parser))
-
 
 
 def display_ast(tree, parser):
@@ -67,3 +66,26 @@ def display_ast(tree, parser):
 
 # 调用函数显示AST
 display_ast(tree, parser)
+
+
+
+# from antlr4 import *
+# from antlr_output.Python3SimplifiedLexer import Python3SimplifiedLexer
+# from antlr_output.Python3SimplifiedParser import Python3SimplifiedParser
+# from ANTLRToPythonAST import ANTLRToPythonAST
+# import ast
+
+# # ... 其他代码保持不变 ...
+
+# parser = Python3SimplifiedParser(token_stream)
+# tree = parser.program()
+
+# # 使用转换器
+# converter = ANTLRToPythonAST()
+# python_ast = converter.visit(tree)
+
+# # 打印 Python AST
+# print(ast.dump(python_ast, indent=2))
+
+# # 如果你还想显示图形化的 AST，可以保留原来的 display_ast 函数调用
+# display_ast(tree, parser)
