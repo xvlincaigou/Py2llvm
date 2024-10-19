@@ -31,6 +31,11 @@ expr_stmt: expr;
 
 return_stmt: RETURN expr;
 
+test
+    : expr (comp_op expr)*
+    | expr (AND expr | OR expr)*
+    ;
+
 if_stmt: IF test ':' suite (ELIF test ':' suite)* (ELSE ':' suite)?;
 
 while_stmt: WHILE test ':' suite;
@@ -42,11 +47,6 @@ funcdef: DEF NAME '(' parameters? ')' ':' suite;
 parameters: NAME (',' NAME)*;
 
 suite: simple_stmt | NEWLINE statement+;
-
-test
-    : expr (comp_op expr)*
-    | expr (AND expr | OR expr)*
-    ;
 
 comp_op
     : '<' | '>' | '==' | '>=' | '<=' | '!='

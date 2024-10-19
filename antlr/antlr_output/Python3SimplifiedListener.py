@@ -80,6 +80,15 @@ class Python3SimplifiedListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by Python3SimplifiedParser#test.
+    def enterTest(self, ctx:Python3SimplifiedParser.TestContext):
+        pass
+
+    # Exit a parse tree produced by Python3SimplifiedParser#test.
+    def exitTest(self, ctx:Python3SimplifiedParser.TestContext):
+        pass
+
+
     # Enter a parse tree produced by Python3SimplifiedParser#if_stmt.
     def enterIf_stmt(self, ctx:Python3SimplifiedParser.If_stmtContext):
         pass
@@ -131,15 +140,6 @@ class Python3SimplifiedListener(ParseTreeListener):
 
     # Exit a parse tree produced by Python3SimplifiedParser#suite.
     def exitSuite(self, ctx:Python3SimplifiedParser.SuiteContext):
-        pass
-
-
-    # Enter a parse tree produced by Python3SimplifiedParser#test.
-    def enterTest(self, ctx:Python3SimplifiedParser.TestContext):
-        pass
-
-    # Exit a parse tree produced by Python3SimplifiedParser#test.
-    def exitTest(self, ctx:Python3SimplifiedParser.TestContext):
         pass
 
 

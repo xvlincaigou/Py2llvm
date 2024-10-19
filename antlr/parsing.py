@@ -1,6 +1,9 @@
 from antlr4 import *
 from antlr_output.Python3SimplifiedLexer import Python3SimplifiedLexer
 from antlr_output.Python3SimplifiedParser import Python3SimplifiedParser
+import tkinter as tk
+from tkinter import ttk
+from antlr4.tree.Trees import Trees
 
 class Python3SimplifiedLexerPLUS(Python3SimplifiedLexer):
     def __init__(self, input=None):
@@ -41,9 +44,26 @@ parser = Python3SimplifiedParser(token_stream)
 tree = parser.program()
 print(tree.toStringTree(recog=parser))
 
-# from antlr4.tree.Trees import Trees
-# from antlr4_tools import TreeViewer
 
-# # 打开解析树 GUI 窗口
-# viewer = TreeViewer(parser.ruleNames, tree)
-# viewer.show()
+
+def display_ast(tree, parser):
+    root = tk.Tk()
+    root.title("Abstract Syntax Tree")
+    
+    tree_view = ttk.Treeview(root)
+    tree_view.pack(expand=True, fill='both')
+    
+    def add_node(parent, ast_node):
+        node_text = Trees.getNodeText(ast_node, ruleNames=parser.ruleNames)
+        node_id = tree_view.insert(parent, 'end', text=node_text)
+        for i in range(ast_node.getChildCount()):
+            add_node(node_id, ast_node.getChild(i))
+        # for child in ast_node.getChild():
+        #     add_node(node_id, child)
+    
+    add_node('', tree)
+    
+    root.mainloop()
+
+# 调用函数显示AST
+display_ast(tree, parser)
