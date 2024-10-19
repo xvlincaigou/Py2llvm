@@ -34,9 +34,7 @@ NUMBER=33
 STRING=34
 NEWLINE=35
 INDENT=36
-DEDENT=37
-COMMENT=38
-WS=39
+WS=37
 '='=1
 ':'=2
 '('=3
@@ -69,4 +67,3 @@ WS=39
 'and'=30
 'or'=31
 '\t'=36
-'DEDENT'=37

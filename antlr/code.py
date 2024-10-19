@@ -8,7 +8,7 @@ def isPrime(n):
     i=3
     res=1
     while i*i<=n and res:
-        if n%i==0: 
+        if n%i==0:
             res=0
         i=i+2
     return res

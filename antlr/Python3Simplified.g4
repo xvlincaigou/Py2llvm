@@ -4,8 +4,8 @@ grammar Python3Simplified;
 program: (NEWLINE | statement)*;
 
 statement
-    : simple_stmt
-    | compound_stmt
+    : INDENT* simple_stmt
+    | INDENT* compound_stmt
     ;
 
 simple_stmt
@@ -41,7 +41,7 @@ funcdef: DEF NAME '(' parameters? ')' ':' suite;
 
 parameters: NAME (',' NAME)*;
 
-suite: simple_stmt | NEWLINE INDENT statement+ DEDENT;
+suite: simple_stmt | NEWLINE statement+;
 
 test
     : expr (comp_op expr)*
@@ -93,11 +93,11 @@ STRING: ('"' .*? '"') | ('\'' .*? '\'');
 NEWLINE: ('\r'? '\n' | '\r');
 
 INDENT: '\t';
-DEDENT: 'DEDENT';
+// DEDENT: 'DEDENT';
 
 // SPACES: [\t]+;
 
-COMMENT: '#' ~[\r\n\f]* -> skip;
+// COMMENT: '#' ~[\r\n\f]* -> skip;
 
 // Skip spaces
 WS: [ ]+ -> skip;
