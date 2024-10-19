@@ -47,8 +47,10 @@ class LLVM:
         }
 
     def getBlock(self, label_name, func_name=None):
-        if func_name is None: func = self.main
-        else: func = self.functions[func_name]
+        if func_name is None: 
+            func = self.main
+        else: 
+            func = self.functions[func_name]
         return func.getBlock(label_name)
 
     def getFunction(self, name):
