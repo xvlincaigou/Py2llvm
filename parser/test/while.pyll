@@ -1,0 +1,7 @@
+while 1:
+	a = 1
+	print(a)
+	b = 1
+	print('b')
+	while 1:
+		print(a)

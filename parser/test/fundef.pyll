@@ -1,0 +1,3 @@
+def call(i):
+	print(i)
+	return 1
