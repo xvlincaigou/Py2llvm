@@ -60,6 +60,9 @@ class Lexer:
             # Check if the previous token is 'DEF'
             if self.tokens and self.tokens[-1].type != 'DEF':
                 token_type = 'FUNC_CALL'
+        elif token_type == 'IDENTIFIER' and self.pos < len(self.text) and self.text[self.pos] == '[':
+            if self.tokens and self.tokens[-1].type != 'DEF':
+                token_type = 'ARRAY_MEMBER'
         
         self.tokens.append(Token(self.pos, token_type, value))
 
