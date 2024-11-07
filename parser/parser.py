@@ -76,16 +76,27 @@ class Parser:
         func_name = self.current_token.value
         self.consume('IDENTIFIER')
         self.consume('LPAREN')
-        param = self.current_token.value
-        self.consume('IDENTIFIER')
+        
+        # Collect parameters
+        params = []
+        if self.current_token.type == 'IDENTIFIER':
+            params.append(self.current_token.value)
+            self.consume('IDENTIFIER')
+            while self.current_token.type == 'COMMA':
+                self.consume('COMMA')
+                params.append(self.current_token.value)
+                self.consume('IDENTIFIER')
+        
         self.consume('RPAREN')
         self.consume('COLON')
         self.consume('NEWLINE')
         body = self.statement_block()
+        
         return ast.FunctionDef(
             name=func_name,
             args=ast.arguments(
-                args=[ast.arg(arg=param, annotation=None)],
+                posonlyargs=[],
+                args=[ast.arg(arg=param, annotation=None) for param in params],
                 vararg=None,
                 kwonlyargs=[],
                 kw_defaults=[],
@@ -350,6 +361,23 @@ if __name__ == "__main__":
         tokens = lexer.tokenize()
         for token in tokens:
             print(token)
+
+        sys.stdout = open('output1.txt', 'w')
+
         parser = Parser(tokens)
         parsed_program = parser.parse()
         print(ast.dump(parsed_program, indent=4))
+        
+        # 编译AST到字节码
+        code_object = compile(parsed_program, filename, 'exec')
+        # 执行字节码
+        exec(code_object)
+
+        sys.stdout.close()
+        sys.stdout = open('output2.txt', 'w')
+
+        # Generate official AST
+        official_ast = ast.parse(source_code)
+        print(ast.dump(official_ast, indent=4))
+
+        sys.stdout.close()

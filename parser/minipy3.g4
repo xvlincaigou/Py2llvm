@@ -58,4 +58,7 @@ WS: [ \t]+ -> skip;
 CONDITIONOP: '==' | '!=' | '>' | '<' | '>=' | '<=';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 NUMBER: '-'? [0-9]+ ('.' [0-9]+)?;
-STRING_LITERAL: '"' (~["\r\n] | '""')* '"';
+STRING_LITERAL: 
+    ('"' (~["\r\n] | '""')* '"') 
+    | 
+    ('\'' (~['\r\n] | '\'\'')* '\'');

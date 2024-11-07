@@ -167,9 +167,17 @@ class Visitor:
             visitor.visit(i)
 
 if __name__ == '__main__':
-    code = open('code.pyll').read()
+    import sys
+    filename = sys.argv[1]
+    code = open(filename).read()
     a = Visitor('main')
-    a.visit(ast.parse(code))
+    from Token import Token
+    from lexer import Lexer
+    from parser import Parser
+    lexer = Lexer(code)
+    tokens = lexer.tokenize()
+    parser = Parser(tokens)
+    a.visit(parser.parse())
 
     with open('generated.ll', 'w') as f: 
         print(llvm.module, file=f)

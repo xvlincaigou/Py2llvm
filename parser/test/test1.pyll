@@ -5,7 +5,7 @@ def factorial(n):
 		return 1
 	else:
 		return n * factorial(n - 1)
-
+	
 numbers = [1, 2, 3, 4, 5, 10]
 for num in numbers:
 	print(factorial(num))
@@ -20,6 +20,7 @@ def insertion_sort(arr):
 			arr[j + 1] = arr[j]
 			j = j - 1
 		arr[j + 1] = key
+		
 	return arr
 
 print(insertion_sort([51, -4, 3, 2, 1]))
@@ -31,3 +32,11 @@ def palindrome(s):
 		if s[i] != s[len(s) - i - 1]:
 			return False
 	return True
+
+welcome = 'Hello world!'
+print(welcome[1])
+
+def add(a, b):
+	return a + b
+
+print(add(1, 2))

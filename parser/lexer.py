@@ -26,9 +26,17 @@ class Lexer:
             elif self.text[self.pos].isdigit() or (self.text[self.pos] == '-' and self.pos + 1 < len(self.text) and self.text[self.pos + 1].isdigit()):
                 self.tokens.append(self.number())
             elif self.text[self.pos] == '"':
-                self.tokens.append(self.string())
+                self.tokens.append(self.string('"'))
+            elif self.text[self.pos] == '\'':
+                self.tokens.append(self.string('\''))
             else:
                 self.tokens.append(self.operator())
+            if self.tokens and self.tokens[-1].type == 'UNKNOWN':
+                RED = '\033[31m'
+                RESET = '\033[0m'
+                print(f"{RED}Error:{RESET} Unknown token at line {self.current_line}, column {self.current_column}, character '{self.tokens[-1].value}'")
+                print(f"{RED}Exiting 1{RESET}")
+                exit(1)
 
         self.tokens.append(Token(self.pos, 'EOF', None))
         return self.tokens
@@ -76,11 +84,11 @@ class Lexer:
             self.current_column += 1
         return Token(self.pos, 'NUMBER', self.text[start:self.pos])
 
-    def string(self):
+    def string(self, quote):
         start = self.pos
         self.pos += 1
         self.current_column += 1
-        while self.pos < len(self.text) and self.text[self.pos] != '"':
+        while self.pos < len(self.text) and self.text[self.pos] != quote:
             if self.text[self.pos] == '\\' and self.pos + 1 < len(self.text):
                 self.pos += 1
                 self.current_column += 1
@@ -124,7 +132,9 @@ class Lexer:
         return Token(self.pos, operators.get(op, 'UNKNOWN'), op)
 
 def main():
-    with open("test_code.py", 'r') as file:
+    import sys
+    filename = sys.argv[1]
+    with open(filename, 'r') as file:
         source_code = file.read()
         lexer = Lexer(source_code)
         tokens = lexer.tokenize()
