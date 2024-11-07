@@ -1,18 +1,40 @@
 a = 1
-if a:
-	print(a)
-elif a:
-	print(a + 1)
-else:
-	print(a + 2)
+if a == 1:
+	a = 1
 
-b = 1
-if a:
-	print(a)
-elif a:
-	print(a + 1)
-	print(b)
-	print(c)
-	print(d)
+if a == 1:
+	a = 1
+elif a == 2:
+	a = 2
+
+if a == 1:
+	a = 1
+elif a == 2:
+	a = 2
+elif a == 3:
+	a = 3
+
+if a == 1:
+	a = 1
 else:
-	print(a + 2)
+	a = 2
+
+if a == 1:
+	a = 1
+elif a == 2:
+	a = 2
+elif a == 3:
+	a = 3
+else:
+	a = 4
+
+def zheten():
+	a = 1
+	if a == 1:
+		print(a)
+	elif a == 2:
+		print(a)
+	elif a == 3:
+		print(a)
+	else:
+		print(a)

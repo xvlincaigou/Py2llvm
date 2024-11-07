@@ -1,34 +1,36 @@
 grammar minipy3;
 
-// Parser Rules
-PROGRAM: (STATEMENT NEWLINE | NEWLINE)* EOF;
-STATEMENT: SIMPLE_STMT | COMPOUND_STMT;
-SIMPLE_STMT: ASSIGNMENT_STMT | RETURN_STMT;
-COMPOUND_STMT: IF_STMT | WHILE_STMT | FOR_STMT | FUNCDEF;
-ASSIGNMENT_STMT: IDENTIFIER ASSIGN EXPRESSION | ARRAY_MEMBER ASSIGN EXPRESSION;
-RETURN_STMT: RETURN EXPRESSION?;
-IF_STMT: IF CONDITION COLON NEWLINE PROGRAM (ELIF_STMT | ELSE_STMT)?;
-ELIF_STMT: ELIF CONDITION COLON NEWLINE PROGRAM (ELIF_STMT | ELSE_STMT)?;
-ELSE_STMT: ELSE COLON NEWLINE PROGRAM;
-WHILE_STMT: WHILE CONDITION COLON NEWLINE PROGRAM;
-FOR_STMT: FOR IDENTIFIER IN EXPRESSION COLON NEWLINE PROGRAM;
-FUNCDEF: DEF IDENTIFIER LPAREN PARAMETERS? RPAREN COLON NEWLINE PROGRAM;
-PARAMETERS: IDENTIFIER (COMMA IDENTIFIER)*;
+// 解析器规则（Parser Rules）
+program: (statement NEWLINE | NEWLINE)* EOF;
+statement: simpleStmt | compoundStmt;
+simpleStmt: assignmentStmt | returnStmt;
+compoundStmt: ifStmt | whileStmt | forStmt | funcDef;
+assignmentStmt: IDENTIFIER ASSIGN expression | arrayMember ASSIGN expression;
+returnStmt: RETURN expression?;
+ifStmt: IF condition COLON NEWLINE program (elifStmt | elseStmt)?;
+elifStmt: ELIF condition COLON NEWLINE program (elifStmt | elseStmt)?;
+elseStmt: ELSE COLON NEWLINE program;
+whileStmt: WHILE condition COLON NEWLINE program;
+forStmt: FOR IDENTIFIER IN expression COLON NEWLINE program;
+funcDef: DEF IDENTIFIER LPAREN parameters? RPAREN COLON NEWLINE program;
+parameters: IDENTIFIER (COMMA IDENTIFIER)*;
 
-CONDITION: LOGIC_EXPR;
-LOGIC_EXPR: COMPARISON (LOGIC_OP COMPARISON)*;
-COMPARISON: NOT COMPARISON | ALGEBRAIC_EXPR (CONDITIONOP ALGEBRAIC_EXPR)?;
-LOGIC_OP: AND | OR;
-EXPRESSION: ALGEBRAIC_EXPR | STRING_LITERAL | LIST;
-ALGEBRAIC_EXPR: TERM TERMTAIL
-TERMTAIL: PLUS TERM TERMTAIL | MINUS TERM TERMTAIL | ε
-TERM: FACTOR FACTORTAIL
-FACTORTAIL: MULTIPLY FACTOR FACTORTAIL | DIVIDE FACTOR FACTORTAIL | ε
-FACTOR: IDENTIFIER | NUMBER | LPAREN ALGEBRAIC_EXPR RPAREN | FUNC_CALL | ARRAY_MEMBER
-FUNC_CALL: IDENTIFIER LPAREN (EXPRESSION (COMMA EXPRESSION)*)? RPAREN;
-LIST: LBRACKET (EXPRESSION (COMMA EXPRESSION)*)? RBRACKET;
+condition: logicExpr;
+logicExpr: comparison (logicOp comparison)*;
+comparison: NOT comparison | algebraicExpr (conditionOp algebraicExpr)?;
+logicOp: AND | OR;
+expression: algebraicExpr | STRING_LITERAL | list | TRUE | FALSE;
+algebraicExpr: term termTail;
+termTail: (PLUS term termTail) | (MINUS term termTail) | ;
+term: factor factorTail;
+factorTail: (MULTIPLY factor factorTail) | (DIVIDE factor factorTail) | ;
+factor: IDENTIFIER | NUMBER | LPAREN algebraicExpr RPAREN | funcCall | arrayMember;
 
-// Lexer Rules
+funcCall: IDENTIFIER LPAREN (expression (COMMA expression)*)? RPAREN;
+list: LBRACKET (expression (COMMA expression)*)? RBRACKET;
+arrayMember: IDENTIFIER LBRACKET expression RBRACKET;
+
+// 词法规则（Lexer Rules）
 RETURN: 'return';
 IF: 'if';
 ELIF: 'elif';
@@ -40,7 +42,7 @@ DEF: 'def';
 AND: 'and';
 OR: 'or';
 NOT: 'not';
-EQUAL: '=';
+ASSIGN: '=';
 COLON: ':';
 COMMA: ',';
 PLUS: '+';
@@ -51,11 +53,13 @@ LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '[';
 RBRACKET: ']';
+TRUE: 'True';
+FALSE: 'False';
 NEWLINE: '\r'? '\n' INDENT?;
 INDENT: ('\t')+;
 WS: [ \t]+ -> skip;
 
-CONDITIONOP: '==' | '!=' | '>' | '<' | '>=' | '<=';
+conditionOp: '==' | '!=' | '>' | '<' | '>=' | '<=';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 NUMBER: '-'? [0-9]+ ('.' [0-9]+)?;
 STRING_LITERAL: 

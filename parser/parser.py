@@ -2,6 +2,7 @@ from Token import Token
 from lexer import Lexer
 import sys
 import ast
+import json
 
 class Parser:
     def __init__(self, tokens):
@@ -11,8 +12,9 @@ class Parser:
         self.indent_level = 0
 
     def error(self):
-        print(self.current_token)
+        print('Error happend at-----------------------: ', self.current_token)
         raise Exception("Parsing error")
+        exit(1)
 
     def consume(self, token_type):
         if self.current_token.type == token_type:
@@ -52,22 +54,25 @@ class Parser:
             return self.return_statement()
         elif self.current_token.type == 'FUNC_CALL':
             return self.function_call()
-        elif self.current_token.type == 'NEWLINE':
-            self.consume('NEWLINE')
+        elif self.current_token.type == 'NEWLINE' or self.current_token.type == 'INDENT':
+            self.consume(self.current_token.type)
             return None
         else:
             self.error()
 
     def assignment_statement(self):
         if self.current_token.type == 'ARRAY_MEMBER':
-            var_name = self.array_member()
+            var_name = self.array_member(ctx=ast.Store())
+            targets = [ast.Subscript(value=var_name.value, slice=var_name.slice, ctx=ast.Store())]
         else:
             var_name = self.current_token.value
+            targets = [ast.Name(id=var_name, ctx=ast.Store())]
             self.consume('IDENTIFIER')
+        
         self.consume('ASSIGN')
         value = self.expression()
         return ast.Assign(
-            targets=[ast.Name(id=var_name, ctx=ast.Store())],
+            targets=targets,
             value=value
         )
 
@@ -115,36 +120,48 @@ class Parser:
         self.consume('COLON')
         self.consume('NEWLINE')
         true_branch = self.statement_block()
-        false_branch = []
+        false_branches = []
         
         # 处理 elif 语句。每次要到这里的时候，都是得到一个indent elif
-        while self.lookahead(1).type == 'ELIF':
+        while self.lookahead(1 if self.indent_level else 0).type == 'ELIF':
             assert self.indent_level == current_indent_level
-            self.consume('INDENT')
+            if self.indent_level:
+                self.consume('INDENT')
             self.consume('ELIF')
             elif_condition = self.condition()
             self.consume('COLON')
             self.consume('NEWLINE')
             elif_branch = self.statement_block()
-            false_branch.append(ast.If(
+            false_branches.append(ast.If(
                 test=elif_condition,
                 body=elif_branch,
                 orelse=[]
             ))
 
+        orelse = []
         # 处理 else 语句
-        if self.lookahead(1).type == 'ELSE':
+        if self.lookahead(1 if self.indent_level else 0).type == 'ELSE':
             assert self.indent_level == current_indent_level
-            self.consume('INDENT')
+            if self.indent_level:
+                self.consume('INDENT')
             self.consume('ELSE')
             self.consume('COLON')
             self.consume('NEWLINE')
-            false_branch.append(self.statement_block())
+            false_branches.append(self.statement_block())
+            orelse = false_branches.pop()
+
+        while false_branches:
+            false_branch = false_branches.pop()
+            orelse = [ast.If(
+                test=false_branch.test,
+                body=false_branch.body,
+                orelse=orelse
+            )]
 
         return ast.If(
             test=condition,
             body=true_branch,
-            orelse=false_branch
+            orelse=orelse
         )
 
 
@@ -197,7 +214,7 @@ class Parser:
             keywords=[]
         )
     
-    def array_member(self):
+    def array_member(self, ctx=ast.Load()):
         array_name = self.current_token.value
         self.consume('ARRAY_MEMBER')
         self.consume('LBRACKET')
@@ -206,10 +223,10 @@ class Parser:
         return ast.Subscript(
             value=ast.Name(id=array_name, ctx=ast.Load()),
             slice=ast.Index(value=index),
-            ctx=ast.Load()
+            ctx=ctx
         )
     
-    # 这个时候开头的必然是INDENT，并且我保证我结束之后，尾巴的这里的indent也被处理掉了
+    # 这个时候开头的必然是INDENT
     def statement_block(self):
         assert self.current_token.type == 'INDENT'
         assert self.tab2indent_level(self.current_token) == self.indent_level + 1
@@ -269,12 +286,17 @@ class Parser:
         解析一个常规表达式 (EXPRESSION)，可能是加法、减法、乘法、除法等。
         """
         if self.current_token.type == 'STRING_LITERAL':
-            node = ast.Constant(value=self.current_token.value)
+            node = ast.Constant(value=self.current_token.value.strip(self.current_token.value[0]))
             self.consume('STRING_LITERAL')
             return node
         
         if self.current_token.type == 'LBRACKET':
             return self.list_expr()
+        
+        if self.current_token.type == 'TRUE' or self.current_token.type == 'FALSE':
+            node = ast.Constant(value=True if self.current_token.type == 'TRUE' else False)
+            self.consume(self.current_token.type)
+            return node
         
         if (self.current_token.type == 'IDENTIFIER' or self.current_token.type == 'NUMBER' or 
             self.current_token.type == 'LPAREN' or self.current_token.type == 'FUNC_CALL' or self.current_token.type == 'ARRAY_MEMBER'):
@@ -353,31 +375,53 @@ class Parser:
             return Token(-1, 'EOF', None)
         return self.tokens[self.current_token_index + n]
 
+def ast_to_dict(node):
+    if isinstance(node, list):  # 处理节点列表
+        return [ast_to_dict(elem) for elem in node]
+    
+    if isinstance(node, ast.AST):  # 处理AST节点
+        node_dict = {}
+        # 将 AST 节点的字段信息放入字典中
+        for field in node._fields:
+            value = getattr(node, field) if hasattr(node, field) else None
+            # 如果字段是AST节点或列表，递归处理
+            if isinstance(value, ast.AST):
+                node_dict[field] = ast_to_dict(value)
+            elif isinstance(value, list):
+                node_dict[field] = ast_to_dict(value)
+            elif value:
+                node_dict[field] = value
+        # 添加类型信息
+        node_dict["type"] = node.__class__.__name__
+        return node_dict
+    return node  # 返回常规值（如数字、字符串等）
+
 if __name__ == "__main__":
     filename = sys.argv[1]
     with open(filename, 'r') as file:
         source_code = file.read()
         lexer = Lexer(source_code)
         tokens = lexer.tokenize()
-        for token in tokens:
-            print(token)
 
-        sys.stdout = open('output1.txt', 'w')
+        # sys.stdout = open('output1.txt', 'w')
+
+        # parser = Parser(tokens)
+        # parsed_program = parser.parse()
+        # print(ast.dump(parsed_program, indent=4))
+
+        # sys.stdout.close()
+        # sys.stdout = open('output2.txt', 'w')
+
+        # # Generate official AST
+        # official_ast = ast.parse(source_code)
+        # print(ast.dump(official_ast, indent=4))
+
+        # sys.stdout.close()
 
         parser = Parser(tokens)
         parsed_program = parser.parse()
-        print(ast.dump(parsed_program, indent=4))
-        
-        # 编译AST到字节码
-        code_object = compile(parsed_program, filename, 'exec')
-        # 执行字节码
-        exec(code_object)
+        ast_dict = ast_to_dict(parsed_program)
 
-        sys.stdout.close()
-        sys.stdout = open('output2.txt', 'w')
-
-        # Generate official AST
-        official_ast = ast.parse(source_code)
-        print(ast.dump(official_ast, indent=4))
-
-        sys.stdout.close()
+        import os
+        with open(f'ast-{os.path.basename(filename)}.json', 'w') as json_file:
+            json.dump(ast_dict, json_file, indent=4)

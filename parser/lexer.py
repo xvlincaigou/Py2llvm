@@ -25,10 +25,8 @@ class Lexer:
                 self.identifier()
             elif self.text[self.pos].isdigit() or (self.text[self.pos] == '-' and self.pos + 1 < len(self.text) and self.text[self.pos + 1].isdigit()):
                 self.tokens.append(self.number())
-            elif self.text[self.pos] == '"':
-                self.tokens.append(self.string('"'))
-            elif self.text[self.pos] == '\'':
-                self.tokens.append(self.string('\''))
+            elif self.text[self.pos] == '"' or self.text[self.pos] == '\'':
+                self.tokens.append(self.string(self.text[self.pos]))
             else:
                 self.tokens.append(self.operator())
             if self.tokens and self.tokens[-1].type == 'UNKNOWN':
@@ -59,7 +57,7 @@ class Lexer:
         keywords = {
             'if': 'IF', 'elif': 'ELIF', 'else': 'ELSE', 'while': 'WHILE', 
             'for': 'FOR', 'in': 'IN', 'def': 'DEF', 'return': 'RETURN', 
-            'and': 'AND', 'or': 'OR', 'not': 'NOT'
+            'and': 'AND', 'or': 'OR', 'not': 'NOT', 'True': 'TRUE', 'False': 'FALSE',
         }
         token_type = keywords.get(value, 'IDENTIFIER')
         
@@ -138,8 +136,9 @@ def main():
         source_code = file.read()
         lexer = Lexer(source_code)
         tokens = lexer.tokenize()
-        for token in tokens:
-            print(token)
+        with open(filename + '.tokens', 'w') as token_file:
+            for token in tokens:
+                token_file.write(f"{token}\n")
 
 if __name__ == "__main__":
     main()

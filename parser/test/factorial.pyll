@@ -1,0 +1,10 @@
+def factorial(n):
+	if n <= 1:
+		return 1
+	else:
+		return n * factorial(n - 1)
+	
+numbers = [1, 2, 3, 4, 5, 10]
+for num in numbers:
+	print(factorial(num))
+print("Done!")

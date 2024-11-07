@@ -1,0 +1,11 @@
+def is_palindrome(s):
+	for i in range(len(s) // 2):
+		if s[i] != s[len(s) - i]:
+			return False
+	return True
+
+s = 'nihao'
+print(is_palindrome(s))
+
+welcome = 'Hello world!'
+print(welcome[1])
