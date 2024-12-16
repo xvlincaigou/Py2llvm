@@ -10,15 +10,30 @@ TODO:
 
 - [X] 四则运算（逆波兰表达式）
 
-- [X] 多层缩进的问题
+- [ ] 多层缩进的问题
 
 - [X] 支持数组
 
 - [ ] 支持字符串处理
 
-构建：
+## 构建方法
 
-```shell
-cd parse
-antlr4 Python3Simplified.g4 -Dlanguage=Python3 -o antlr_output
+```bash
+# 构建
+make build FILE=<file_name>
 ```
+
+```bash
+# 运行
+./output
+```
+
+```bash
+# 清理
+make clean
+```
+
+## 依赖
+
+- llvm
+- llvmlite(python bindings for llvm)

@@ -171,7 +171,6 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     code = open(filename).read()
     a = Visitor('main')
-    from Token import Token
     from lexer import Lexer
     from parser import Parser
     lexer = Lexer(code)
