@@ -1,3 +1,6 @@
 x = ["Hello", "world", ",", "xvlincaigou", "!"]
 y = [1, 2, 3]
 z = [[1, 2, 3], ["hello", "world"], []]
+print(x[0])
+print(y[1])
+print(z[1][1])
