@@ -1,0 +1,16 @@
+data = json_load(f)
+
+new_data = []
+for item in data:
+	new_data[item] = info
+	
+client = MongoClient("mongodb://localhost:27017/")
+
+db = client["admin"]
+collection = db["CipaiList"]
+
+result = collection_insert_one(new_data)
+
+print("Data inserted successfully.")
+
+client_close()

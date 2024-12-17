@@ -1,0 +1,13 @@
+def ProcB(a):
+	b = 20
+	c = a + b
+	return c
+
+def ProcB(a, b):
+	b = 40
+	c = a + b
+	return c
+
+a = 10
+x = ProcB(a)
+print(x)

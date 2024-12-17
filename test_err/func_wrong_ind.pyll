@@ -1,0 +1,6 @@
+def Square(num):
+sqr = num * num
+print(sqr)
+
+num = 10
+Square(num)

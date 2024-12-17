@@ -1,0 +1,7 @@
+def ProcB():
+	a = 10
+	c = a + b
+	return c
+
+x = ProcB()
+print(x)

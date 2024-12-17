@@ -1,0 +1,11 @@
+def Greater(x):
+	if x > 10
+		return true
+	else:
+		return false
+
+num = 15
+if Greater(num):
+	print("num is greater than 10")
+else:
+	print("num is not greater than 10")
