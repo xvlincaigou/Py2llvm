@@ -1,9 +1,10 @@
 x = 1
+print(x)
 y = 2
 z = 3
 xyz = 4
-x = 2
-print(x)
 print(y)
 print(z)
 print(xyz)
+x = 2
+print(x)

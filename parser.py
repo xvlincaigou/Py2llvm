@@ -3,6 +3,7 @@ from lexer import Lexer
 import sys
 import ast
 import json
+from symbol_table import SymbolTable
 
 class Parser:
     def __init__(self, tokens):
@@ -10,11 +11,16 @@ class Parser:
         self.current_token_index = 0
         self.current_token = self.tokens[self.current_token_index]
         self.indent_level = 0
-
-    def error(self):
-        print('Error happend at-----------------------: ', self.current_token)
-        raise Exception("Parsing error")
-        exit(1)
+        self.symbol_table = SymbolTable()  # 全局符号表
+        self.symbol_table.define('print', 'function')
+        self.symbol_table.define('range', 'function')
+        self.symbol_table.define('len', 'function')
+        
+    def error(self, message="Parsing error"):
+        RED = '\033[31m'
+        RESET = '\033[0m'
+        print(f"{RED}Error at token {self.current_token}: {message} {RESET}")
+        sys.exit(1)
 
     def consume(self, token_type):
         if self.current_token.type == token_type:
@@ -66,6 +72,13 @@ class Parser:
             targets = [ast.Subscript(value=var_name.value, slice=var_name.slice, ctx=ast.Store())]
         else:
             var_name = self.current_token.value
+            symbol = self.symbol_table.lookup(var_name)
+            if symbol:
+                if symbol.type != 'variable':
+                    self.error(f"'{var_name}' is not a variable. Please use array_member to assign to array elements.")
+            else:
+                # 变量未定义，添加到符号表
+                self.symbol_table.define(var_name, 'variable')
             targets = [ast.Name(id=var_name, ctx=ast.Store())]
             self.consume('IDENTIFIER')
         
@@ -82,20 +95,43 @@ class Parser:
         self.consume('IDENTIFIER')
         self.consume('LPAREN')
         
+        # 将函数名添加到当前符号表
+        if self.symbol_table.lookup(func_name):
+            self.error(f"Function '{func_name}' already defined. Please choose another name.")
+        self.symbol_table.define(func_name, 'function')
+
         # Collect parameters
         params = []
         if self.current_token.type == 'IDENTIFIER':
-            params.append(self.current_token.value)
+            param_name = self.current_token.value
+            params.append(param_name)
             self.consume('IDENTIFIER')
             while self.current_token.type == 'COMMA':
                 self.consume('COMMA')
-                params.append(self.current_token.value)
+                if self.current_token.type != 'IDENTIFIER':
+                    self.error("Expected parameter name after comma.")
+                param_name = self.current_token.value
+                params.append(param_name)
                 self.consume('IDENTIFIER')
-        
+
         self.consume('RPAREN')
         self.consume('COLON')
         self.consume('NEWLINE')
+
+        # 创建新的符号表作用域
+        previous_symbol_table = self.symbol_table
+        self.symbol_table = SymbolTable(parent=previous_symbol_table)
+
+        # 将参数添加到新的作用域
+        for param in params:
+            if self.symbol_table.lookup(param):
+                self.error(f"Parameter '{param}' already defined. Please choose another name.")
+            self.symbol_table.define(param, 'parameter')
+
         body = self.statement_block()
+
+        # 恢复之前的符号表
+        self.symbol_table = previous_symbol_table
         
         return ast.FunctionDef(
             name=func_name,
@@ -168,6 +204,9 @@ class Parser:
     def for_statement(self):
         self.consume('FOR')
         loop_var = self.current_token.value
+        if self.symbol_table.lookup(loop_var):
+            self.error(f"Loop variable '{loop_var}' already defined. Please choose another name.")
+        self.symbol_table.define(loop_var, 'variable')
         self.consume('IDENTIFIER')
         self.consume('IN')
         iterable = self.expression()
@@ -200,6 +239,8 @@ class Parser:
 
     def function_call(self):
         func_name = self.current_token.value
+        if not self.symbol_table.lookup(func_name):
+            self.error(f"Undefined function '{func_name}', please define it first.")
         self.consume('FUNC_CALL')
         self.consume('LPAREN')
         args = []
@@ -216,6 +257,11 @@ class Parser:
     
     def array_member(self, ctx=ast.Load()):
         array_name = self.current_token.value
+        symbol = self.symbol_table.lookup(array_name)
+        if not symbol:
+            self.error(f"Undefined array '{array_name}', please define it first.")
+        elif symbol.type != 'variable':
+            self.error(f"'{array_name}' is not an array.")
         self.consume('ARRAY_MEMBER')
         self.consume('LBRACKET')
         index = self.expression()
@@ -239,6 +285,7 @@ class Parser:
                 self.indent_level -= 1
                 return statements
             self.consume('INDENT')
+            ## 可能需要新增作用域
             statements.append(self.statement())
             if self.current_token.type == 'NEWLINE':
                 self.consume('NEWLINE')
@@ -353,6 +400,9 @@ class Parser:
             return ast.Constant(value=value)
         elif self.current_token.type == 'IDENTIFIER':  # 如果是标识符
             value = self.current_token.value  # 获取标识符值
+            symbol = self.symbol_table.lookup(value)
+            if not symbol:
+                self.error(f"Undefined variable '{value}', please define it first.")
             self.consume('IDENTIFIER')
             return ast.Name(id=value, ctx=ast.Load())
         elif self.current_token.type == 'LPAREN':  # 如果是括号，递归解析表达式
@@ -402,6 +452,7 @@ if __name__ == "__main__":
         source_code = file.read()
         lexer = Lexer(source_code)
         tokens = lexer.tokenize()
+        print(tokens)
 
         # sys.stdout = open('output1.txt', 'w')
 

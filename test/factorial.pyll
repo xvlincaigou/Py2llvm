@@ -7,4 +7,3 @@ def factorial(n):
 numbers = [1, 2, 3, 4, 5, 10]
 for num in numbers:
 	print(factorial(num))
-print("Done!")

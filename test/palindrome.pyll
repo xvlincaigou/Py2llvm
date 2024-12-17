@@ -9,6 +9,10 @@ def palindrome(s):
 s = 'aabbcc'
 t = 'abccba'
 if palindrome(s):
-	print('s')
+	print('True')
+else:
+	print('False')
 if palindrome(t):
-	print('t')
+	print('True')
+else:
+	print('False')

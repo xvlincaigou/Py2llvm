@@ -6,7 +6,8 @@ def insertion_sort(arr):
 			arr[j + 1] = arr[j]
 			j = j - 1
 		arr[j + 1] = key
-		
 	return arr
 
-print(insertion_sort([51, -4, 3, 2, 1]))
+arr = insertion_sort([51, -4, 3, 2, 1])
+for i in arr:
+	print(i)
