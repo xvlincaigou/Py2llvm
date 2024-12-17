@@ -74,7 +74,7 @@ class Parser:
             var_name = self.current_token.value
             symbol = self.symbol_table.lookup(var_name)
             if symbol:
-                if symbol.type != 'variable':
+                if symbol.type != 'variable' and symbol.type != 'parameter':
                     self.error(f"'{var_name}' is not a variable. Please use array_member to assign to array elements.")
             else:
                 # 变量未定义，添加到符号表
@@ -160,7 +160,8 @@ class Parser:
         
         # 处理 elif 语句。每次要到这里的时候，都是得到一个indent elif
         while self.lookahead(1 if self.indent_level else 0).type == 'ELIF':
-            assert self.indent_level == current_indent_level
+            if self.indent_level != current_indent_level:
+                self.error("Wrong indent level.")
             if self.indent_level:
                 self.consume('INDENT')
             self.consume('ELIF')
@@ -177,7 +178,8 @@ class Parser:
         orelse = []
         # 处理 else 语句
         if self.lookahead(1 if self.indent_level else 0).type == 'ELSE':
-            assert self.indent_level == current_indent_level
+            if self.indent_level != current_indent_level:
+                self.error("Wrong indent level.")
             if self.indent_level:
                 self.consume('INDENT')
             self.consume('ELSE')
@@ -260,7 +262,7 @@ class Parser:
         symbol = self.symbol_table.lookup(array_name)
         if not symbol:
             self.error(f"Undefined array '{array_name}', please define it first.")
-        elif symbol.type != 'variable':
+        elif symbol.type != 'variable' and symbol.type != 'parameter':
             self.error(f"'{array_name}' is not an array.")
         self.consume('ARRAY_MEMBER')
         self.consume('LBRACKET')
@@ -274,8 +276,10 @@ class Parser:
     
     # 这个时候开头的必然是INDENT
     def statement_block(self):
-        assert self.current_token.type == 'INDENT'
-        assert self.tab2indent_level(self.current_token) == self.indent_level + 1
+        if self.current_token.type != 'INDENT':
+            self.error("Expected an indent token.")
+        if self.tab2indent_level(self.current_token) != self.indent_level + 1:
+            self.error("Wrong indent level.")
         self.indent_level = self.tab2indent_level(self.current_token)
         statements = []
         while self.current_token.type == 'INDENT':
