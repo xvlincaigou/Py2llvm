@@ -11,13 +11,13 @@ class Lexer:
     def tokenize(self):
         while self.pos < len(self.text):
             if self.text[self.pos] == '\n':
-                self.tokens.append(Token(self.pos, 'NEWLINE', '\n'))
+                self.tokens.append(Token(self.pos, 'NEWLINE', '\n', self.current_line, self.current_column))
                 self.pos += 1
                 self.current_line += 1
                 self.current_column = 1
                 indent = self.get_indent()
                 if indent:
-                    self.tokens.append(Token(self.pos, 'INDENT', indent))
+                    self.tokens.append(Token(self.pos, 'INDENT', indent, self.current_line, self.current_column))
             elif self.text[self.pos].isspace():
                 self.pos += 1
                 self.current_column += 1
@@ -36,7 +36,7 @@ class Lexer:
                 print(f"{RED}Exiting 1{RESET}")
                 exit(1)
 
-        self.tokens.append(Token(self.pos, 'EOF', None))
+        self.tokens.append(Token(self.pos, 'EOF', None, self.current_line, self.current_column))
         return self.tokens
 
     def get_indent(self):
@@ -70,7 +70,7 @@ class Lexer:
             if self.tokens and self.tokens[-1].type != 'DEF':
                 token_type = 'ARRAY_MEMBER'
         
-        self.tokens.append(Token(self.pos, token_type, value))
+        self.tokens.append(Token(self.pos, token_type, value, self.current_line, self.current_column))
 
     def number(self):
         start = self.pos
@@ -80,7 +80,7 @@ class Lexer:
         while self.pos < len(self.text) and (self.text[self.pos].isdigit() or self.text[self.pos] == '.'):
             self.pos += 1
             self.current_column += 1
-        return Token(self.pos, 'NUMBER', self.text[start:self.pos])
+        return Token(self.pos, 'NUMBER', self.text[start:self.pos], self.current_line, self.current_column)
 
     def string(self, quote):
         start = self.pos
@@ -95,7 +95,7 @@ class Lexer:
         if self.pos < len(self.text):
             self.pos += 1
             self.current_column += 1
-        return Token(self.pos, 'STRING_LITERAL', self.text[start:self.pos])
+        return Token(self.pos, 'STRING_LITERAL', self.text[start:self.pos], self.current_line, self.current_column)
 
     def operator(self):
         operators = {
@@ -127,7 +127,7 @@ class Lexer:
             self.pos += 1
             self.current_column += 1
         
-        return Token(self.pos, operators.get(op, 'UNKNOWN'), op)
+        return Token(self.pos, operators.get(op, 'UNKNOWN'), op, self.current_line, self.current_column)
 
 def main():
     import sys
