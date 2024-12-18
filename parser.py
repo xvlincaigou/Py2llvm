@@ -458,20 +458,20 @@ if __name__ == "__main__":
         tokens = lexer.tokenize()
         print(tokens)
 
-        # sys.stdout = open('output1.txt', 'w')
+        sys.stdout = open('output1.txt', 'w')
 
-        # parser = Parser(tokens)
-        # parsed_program = parser.parse()
-        # print(ast.dump(parsed_program, indent=4))
+        parser = Parser(tokens)
+        parsed_program = parser.parse()
+        print(ast.dump(parsed_program, indent=4))
 
-        # sys.stdout.close()
-        # sys.stdout = open('output2.txt', 'w')
+        sys.stdout.close()
+        sys.stdout = open('output2.txt', 'w')
 
-        # # Generate official AST
-        # official_ast = ast.parse(source_code)
-        # print(ast.dump(official_ast, indent=4))
+        # Generate official AST
+        official_ast = ast.parse(source_code)
+        print(ast.dump(official_ast, indent=4))
 
-        # sys.stdout.close()
+        sys.stdout.close()
 
         parser = Parser(tokens)
         parsed_program = parser.parse()
