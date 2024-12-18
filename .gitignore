@@ -166,3 +166,4 @@ output
 *.ll
 
 *.tokens
+.DS_Store

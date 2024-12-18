@@ -1,8 +1,0 @@
-def trap(num):
-	num = num + 1
-	ans = trap(num)
-	new_num = ans + num
-	return new_num
-
-if __name__ == "__main__":
-	print(trap(0))
