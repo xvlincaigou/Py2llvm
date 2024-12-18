@@ -38,5 +38,6 @@ elif a == 2:
 	a = 2
 	print(a)
 else:
+	print(a)
 	a = 4
 	print(a)

@@ -1,6 +1,7 @@
 from llvmlite import ir
 from llvmlite.ir import Type
 
+# 基本类型定义
 Int = ir.IntType(32)
 PInt = ir.PointerType(Int)
 Bool = ir.IntType(1)
@@ -19,23 +20,22 @@ class Function:
     def get(module, name, typ, init=False):
         return Function(ir.Function(module, ir.FunctionType(*typ), name), init)
 
-    def alloc(self, name, value):
+    def alloc(self, name, value, typ=Int):
         if name not in self.var:
-            mem = self.builder.alloca(Int)
+            mem = self.builder.alloca(typ, name=name+"_alloc")
             self.builder.store(value, mem)
-            self.var[name] = Variable(self, mem)
+            self.var[name] = Variable(self, mem, typ)
         else:
             self.builder.store(value, self.var[name].addr)
 
-
 class Variable:
-    def __init__(self, func, addr):
+    def __init__(self, func, addr, typ):
         self.func = func
         self.addr = addr
+        self.type = typ
 
     def load(self):
         return self.func.builder.load(self.addr)
-
 
 class LLVM:
     def __init__(self):
@@ -43,7 +43,7 @@ class LLVM:
         self.main = Function.get(self.module, 'main', (Int, []), True)
         self.functions = {
             'main': self.main,
-            'print': Function.get(self.module, 'print', (Int, [Int])),
+            'print': Function.get(self.module, 'print', (Void, [Int])),
         }
 
     def getBlock(self, label_name, func_name=None):
@@ -58,5 +58,3 @@ class LLVM:
 
     def getBuilder(self, name):
         return self.functions[name].builder
-
-    

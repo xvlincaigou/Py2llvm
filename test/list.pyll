@@ -2,3 +2,8 @@ y = [1, 2, 3]
 print(y[0])
 print(y[1])
 print(y[2])
+y[0] = 7
+print(y[0])
+print(len(y))
+x = y
+print(x[1])
