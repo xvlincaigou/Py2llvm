@@ -1,0 +1,13 @@
+def KillTime(text):
+	str = "sentence"
+	i = 0
+	n = 0
+	for c text:
+		str[i] = c
+		i = i + 1
+		if i == 8:
+			n = n + 1
+			print(n)
+
+words = "Hello, world!!dlrow, olleH"
+KillTime(words)

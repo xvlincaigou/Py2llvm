@@ -1,0 +1,8 @@
+def NewOperator(a):
+	if a <> 5:
+		return a + 1
+	else:
+		return a
+
+x = NewOperator(1)
+print(x)

@@ -1,0 +1,5 @@
+func Add(a, b):
+	return a + b
+
+x = Add(1, 2)
+print(x)
