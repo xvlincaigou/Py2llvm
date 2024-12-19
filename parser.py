@@ -32,8 +32,82 @@ class Parser:
 
     def tab2indent_level(self, token):
         indent_size = token.value.count('\t') * 4 + token.value.count(' ')
-        assert not (indent_size % 4)
+        if indent_size % 4 != 0:
+            self.error(f"Indentation level should be a multiple of 4, but got {indent_size}.")
         return indent_size // 4
+    
+    def lookahead(self, n):
+        """
+        预读下一个令牌。
+        """
+        if self.current_token_index + n >= len(self.tokens):
+            return Token(-1, 'EOF', None, self.current_token.line, self.current_token.column)
+        return self.tokens[self.current_token_index + n]
+
+    def infer_type(self, node):
+        """
+        根据 AST 节点推断类型和长度。
+        返回一个元组 (type, length)，其中 length 可以是 None。
+        """
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, int):
+                return ('int', None)
+            elif isinstance(node.value, bool):
+                return ('bool', None)
+            elif isinstance(node.value, str):
+                return ('str', len(node.value))
+            else:
+                return ('unknown', None)
+        elif isinstance(node, ast.List):
+            # 假设列表中的元素类型为 int，长度为 len(node.elts)
+            return ('list', len(node.elts))
+        elif isinstance(node, ast.BinOp):
+            left_type, left_length = self.infer_type(node.left)
+            right_type, right_length = self.infer_type(node.right)
+            if left_type == right_type and left_type in ['int', 'bool']:
+                return (left_type, None)
+            else:
+                return ('unknown', None)
+        elif isinstance(node, ast.Call):
+            func_name = node.func.id
+            # 假设内置函数返回类型如下
+            built_in_return_types = {
+                'len': 'int',
+                'print': 'unknown',
+                'range': 'unknown',  # 这里只是示例，具体类型根据需要定义
+            }
+            return (built_in_return_types.get(func_name, 'unknown'), None)
+        elif isinstance(node, ast.Name):
+            symbol = self.symbol_table.lookup(node.id)
+            if symbol:
+                if 'length' in symbol.attributes:
+                    return (symbol.attributes['data_type'], symbol.attributes['length'])
+                return (symbol.attributes['data_type'], None)
+            else:
+                return ('unknown', None)
+        elif isinstance(node, ast.BoolOp):
+            # 逻辑操作符的结果类型为 bool
+            return ('bool', None)
+        elif isinstance(node, ast.Compare):
+            # 比较操作符的结果类型为 bool
+            return ('bool', None)
+        elif isinstance(node, ast.UnaryOp):
+            # 一元操作符，根据操作符类型推断
+            if isinstance(node.op, (ast.Not, ast.USub, ast.UAdd)):
+                return self.infer_type(node.operand)
+            else:
+                return ('unknown', None)
+        elif isinstance(node, ast.Subscript):
+            # 获取子元素的类型，基于容器类型
+            container_type, _ = self.infer_type(node.value)
+            if container_type == 'list':
+                return ('int', None)  # 假设列表元素为 int
+            elif container_type == 'str':
+                return ('char', None)  # 假设字符串元素为 char (i8)
+            else:
+                return ('unknown', None)
+        else:
+            return ('unknown', None)
 
     def parse(self):
         return self.program()
@@ -64,12 +138,13 @@ class Parser:
             self.consume(self.current_token.type)
             return None
         else:
-            self.error()
+            self.error(f'Unexpected token: {self.current_token.type}')
 
     def assignment_statement(self):
         if self.current_token.type == 'ARRAY_MEMBER':
             var_name = self.array_member(ctx=ast.Store())
             targets = [ast.Subscript(value=var_name.value, slice=var_name.slice, ctx=ast.Store())]
+            symbol = None
         else:
             var_name = self.current_token.value
             symbol = self.symbol_table.lookup(var_name)
@@ -77,13 +152,38 @@ class Parser:
                 if symbol.type != 'variable' and symbol.type != 'parameter':
                     self.error(f"'{var_name}' is not a variable. Please use array_member to assign to array elements.")
             else:
-                # 变量未定义，添加到符号表
+                # 变量未定义，添加到符号表，暂时我们还不知道类型
                 self.symbol_table.define(var_name, 'variable')
+                symbol = self.symbol_table.lookup(var_name)
             targets = [ast.Name(id=var_name, ctx=ast.Store())]
             self.consume('IDENTIFIER')
         
         self.consume('ASSIGN')
         value = self.expression()
+
+        node_type = type(value)
+        if node_type == ast.List:
+            length = len(value.elts)
+        else:
+            length = None
+        
+        inferred_type, _ = self.infer_type(value)
+
+        if symbol:
+            existing_type = symbol.attributes.get('data_type')
+            if existing_type:
+                if existing_type != inferred_type:
+                    # 类型冲突，设为 'unknown' 并报错
+                    symbol.attributes['data_type'] = 'unknown'
+                    self.error(f"Type conflict for variable '{var_name}': {existing_type} vs {inferred_type}")
+            else:
+                symbol.attributes['data_type'] = inferred_type
+                symbol.attributes['length'] = length
+        else:
+            # 这个情况下是数组member，类型应该是 'int'，但是我们也不知道后面会赋值什么，所以unknown也可以
+            if inferred_type not in ['int', 'unknown']:
+                self.error(f"Array member '{var_name}' should be assigned an integer value. We only support integer arrays for now.")
+
         return ast.Assign(
             targets=targets,
             value=value
@@ -102,17 +202,41 @@ class Parser:
 
         # Collect parameters
         params = []
+        param_annotations = []
         if self.current_token.type == 'IDENTIFIER':
             param_name = self.current_token.value
-            params.append(param_name)
             self.consume('IDENTIFIER')
+            if self.current_token.type == 'COLON':
+                self.consume('COLON')
+                if self.current_token.type != 'IDENTIFIER':
+                    self.error("Expected type name after colon.")
+                param_type = self.current_token.value
+                param_annotations.append(ast.Name(id=param_type, ctx=ast.Load()))
+                self.consume('IDENTIFIER')
+                # 定义参数符号表项
+                self.symbol_table.define(param_name, 'parameter', data_type=param_type)
+            else:
+                param_annotations.append(ast.Name(id='int', ctx=ast.Load()))
+                self.symbol_table.define(param_name, 'parameter', data_type='int')
+            params.append(param_name)
             while self.current_token.type == 'COMMA':
                 self.consume('COMMA')
                 if self.current_token.type != 'IDENTIFIER':
                     self.error("Expected parameter name after comma.")
                 param_name = self.current_token.value
-                params.append(param_name)
                 self.consume('IDENTIFIER')
+                if self.current_token.type == 'COLON':
+                    self.consume('COLON')
+                    if self.current_token.type != 'IDENTIFIER':
+                        self.error("Expected type name after colon.")
+                    param_type = self.current_token.value
+                    param_annotations.append(ast.Name(id=param_type, ctx=ast.Load()))
+                    self.consume('IDENTIFIER')
+                    self.symbol_table.define(param_name, 'parameter', data_type=param_type)
+                else:
+                    param_annotations.append(ast.Name(id='int', ctx=ast.Load()))
+                    self.symbol_table.define(param_name, 'parameter', data_type='int')
+                params.append(param_name)
 
         self.consume('RPAREN')
         self.consume('COLON')
@@ -122,22 +246,20 @@ class Parser:
         previous_symbol_table = self.symbol_table
         self.symbol_table = SymbolTable(parent=previous_symbol_table)
 
-        # 将参数添加到新的作用域
-        for param in params:
-            if self.symbol_table.lookup(param):
-                self.error(f"Parameter '{param}' already defined. Please choose another name.")
-            self.symbol_table.define(param, 'parameter')
-
         body = self.statement_block()
 
         # 恢复之前的符号表
         self.symbol_table = previous_symbol_table
         
+        ast_args = []
+        for param, annotation in zip(params, param_annotations):
+            ast_args.append(ast.arg(arg=param, annotation=annotation))
+
         return ast.FunctionDef(
             name=func_name,
             args=ast.arguments(
                 posonlyargs=[],
-                args=[ast.arg(arg=param, annotation=None) for param in params],
+                args=ast_args,
                 vararg=None,
                 kwonlyargs=[],
                 kw_defaults=[],
@@ -208,7 +330,7 @@ class Parser:
         loop_var = self.current_token.value
         if self.symbol_table.lookup(loop_var):
             self.error(f"Loop variable '{loop_var}' already defined. Please choose another name.")
-        self.symbol_table.define(loop_var, 'variable')
+        self.symbol_table.define(loop_var, 'variable', data_type='int')
         self.consume('IDENTIFIER')
         self.consume('IN')
         iterable = self.expression()
@@ -262,12 +384,18 @@ class Parser:
         symbol = self.symbol_table.lookup(array_name)
         if not symbol:
             self.error(f"Undefined array '{array_name}', please define it first.")
-        elif symbol.type != 'variable' and symbol.type != 'parameter':
-            self.error(f"'{array_name}' is not an array.")
+        elif symbol.type not in ['variable', 'parameter']:
+            self.error(f"'{array_name}' is not a variable or parameter.")
+        
+        data_type = symbol.attributes.get('data_type')
+        if data_type not in ['list', 'str']:
+            self.error(f"'{array_name}' is neither a list nor a str.")
+        
         self.consume('ARRAY_MEMBER')
         self.consume('LBRACKET')
         index = self.expression()
         self.consume('RBRACKET')
+        
         return ast.Subscript(
             value=ast.Name(id=array_name, ctx=ast.Load()),
             slice=ast.Index(value=index),
@@ -362,9 +490,9 @@ class Parser:
                 elif op == '-':
                     left = ast.BinOp(left=left, op=ast.Sub(), right=right)
             return left
-    
-        self.error()
-    
+
+        self.error(f'Unexpected token: {self.current_token.type}')
+
     def list_expr(self):
         """
         解析列表字面量（LIST），即`[expr1, expr2, ...]`。
@@ -377,7 +505,7 @@ class Parser:
                 self.consume('COMMA')
         self.consume('RBRACKET')
         return ast.List(elts=elements, ctx=ast.Load())
-    
+
     def term(self):
         """
         解析一个基础的术语（TERM），可能是乘法、除法等。
@@ -419,16 +547,8 @@ class Parser:
         elif self.current_token.type == 'ARRAY_MEMBER':
             return self.array_member()
         else:
-            self.error()
+            self.error(f'Unexpected token: {self.current_token.type}')
     
-    def lookahead(self, n):
-        """
-        预读下一个令牌。
-        """
-        if self.current_token_index + n >= len(self.tokens):
-            return Token(-1, 'EOF', None)
-        return self.tokens[self.current_token_index + n]
-
 def ast_to_dict(node):
     if isinstance(node, list):  # 处理节点列表
         return [ast_to_dict(elem) for elem in node]

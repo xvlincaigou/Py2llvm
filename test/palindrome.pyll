@@ -1,4 +1,4 @@
-def palindrome(s):
+def palindrome(s: str):
 	if len(s) <= 1:
 		return True
 	for i in range(len(s) // 2):

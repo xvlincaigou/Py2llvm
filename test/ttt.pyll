@@ -2,7 +2,7 @@ def callint(i):
 	i=10
 	return i
 
-def callarr(arr):
+def callarr(arr: list):
 	arr[1]=len(arr)
 	return arr
 

@@ -1,4 +1,4 @@
-def insertion_sort(arr):
+def insertion_sort(arr: list):
 	for i in range(len(arr)):
 		key = arr[i]
 		j = i - 1
@@ -8,6 +8,7 @@ def insertion_sort(arr):
 		arr[j + 1] = key
 	return arr
 
-arr = insertion_sort([51, -4, 3, 2, 1])
-for i in arr:
+original_arr = [51, -4, 3, 2, 1]
+sorted_arr = insertion_sort(original_arr)
+for i in sorted_arr:
 	print(i)

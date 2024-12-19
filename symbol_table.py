@@ -12,7 +12,7 @@ class SymbolTable:
         self.symbols = {}
         self.parent = parent
 
-    def define(self, name, symbol_type, attributes=None):
+    def define(self, name, symbol_type, **attributes):
         if name in self.symbols:
             raise Exception(f"Symbol '{name}' already defined in the current scope.")
         self.symbols[name] = Symbol(name, symbol_type, attributes)
