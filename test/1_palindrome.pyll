@@ -1,0 +1,12 @@
+s = 'aaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaa'
+if len(s) <= 1:
+	print('True')
+else:
+	bool = 1
+	for i in range(len(s) // 2):
+		if s[i] != s[len(s) - i - 1]:
+			bool = 0
+	if bool != 0:
+		print('True')
+	else:
+		print('False')

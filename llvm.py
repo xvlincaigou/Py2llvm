@@ -6,6 +6,8 @@ Int = ir.IntType(32)
 PInt = ir.PointerType(Int)
 Bool = ir.IntType(1)
 Void = ir.VoidType()
+Char = ir.IntType(8)
+PChar = ir.PointerType(Char)
 
 class Function:
     def __init__(self, func, init):
@@ -43,7 +45,8 @@ class LLVM:
         self.main = Function.get(self.module, 'main', (Int, []), True)
         self.functions = {
             'main': self.main,
-            'print': Function.get(self.module, 'print', (Void, [Int])),
+            'print_i32': Function.get(self.module, 'print_i32', (Void, [Int])),
+            'print_str': Function.get(self.module, 'print_str', (Void, [PChar])),	
         }
 
     def getBlock(self, label_name, func_name=None):

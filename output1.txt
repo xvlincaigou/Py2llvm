@@ -1,0 +1,56 @@
+Module(
+    body=[
+        Assign(
+            targets=[
+                Name(id='s', ctx=Store())],
+            value=Constant(value='aabbcc')),
+        If(
+            test=Compare(
+                left=Call(
+                    func=Name(id='len', ctx=Load()),
+                    args=[
+                        Name(id='s', ctx=Load())],
+                    keywords=[]),
+                ops=[
+                    LtE()],
+                comparators=[
+                    Constant(value=1)]),
+            body=[
+                Call(
+                    func=Name(id='print', ctx=Load()),
+                    args=[
+                        Constant(value='True')],
+                    keywords=[])],
+            orelse=[
+                Assign(
+                    targets=[
+                        Name(id='i', ctx=Store())],
+                    value=Constant(value=1)),
+                If(
+                    test=Compare(
+                        left=Subscript(
+                            value=Name(id='s', ctx=Load()),
+                            slice=Name(id='i', ctx=Load()),
+                            ctx=Load()),
+                        ops=[
+                            NotEq()],
+                        comparators=[
+                            Subscript(
+                                value=Name(id='s', ctx=Load()),
+                                slice=BinOp(
+                                    left=Call(
+                                        func=Name(id='len', ctx=Load()),
+                                        args=[
+                                            Name(id='s', ctx=Load())],
+                                        keywords=[]),
+                                    op=Sub(),
+                                    right=Name(id='i', ctx=Load())),
+                                ctx=Load())]),
+                    body=[
+                        Call(
+                            func=Name(id='print', ctx=Load()),
+                            args=[
+                                Constant(value='True')],
+                            keywords=[])],
+                    orelse=[])])],
+    type_ignores=[])
