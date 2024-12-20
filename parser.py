@@ -277,7 +277,16 @@ class Parser:
         condition = self.condition()
         self.consume('COLON')
         self.consume('NEWLINE')
+        
+        # 创建新的符号表作用域
+        previous_symbol_table = self.symbol_table
+        self.symbol_table = SymbolTable(parent=previous_symbol_table)
+
         true_branch = self.statement_block()
+
+        # 恢复之前的符号表
+        self.symbol_table = previous_symbol_table
+
         false_branches = []
         
         # 处理 elif 语句。每次要到这里的时候，都是得到一个indent elif
@@ -290,7 +299,10 @@ class Parser:
             elif_condition = self.condition()
             self.consume('COLON')
             self.consume('NEWLINE')
+            previous_symbol_table = self.symbol_table
+            self.symbol_table = SymbolTable(parent=previous_symbol_table)
             elif_branch = self.statement_block()
+            self.symbol_table = previous_symbol_table
             false_branches.append(ast.If(
                 test=elif_condition,
                 body=elif_branch,
@@ -307,8 +319,11 @@ class Parser:
             self.consume('ELSE')
             self.consume('COLON')
             self.consume('NEWLINE')
+            previous_symbol_table = self.symbol_table
+            self.symbol_table = SymbolTable(parent=previous_symbol_table)
             false_branches.append(self.statement_block())
             orelse = false_branches.pop()
+            self.symbol_table = previous_symbol_table
 
         while false_branches:
             false_branch = false_branches.pop()
@@ -327,6 +342,8 @@ class Parser:
 
     def for_statement(self):
         self.consume('FOR')
+        previous_symbol_table = self.symbol_table
+        self.symbol_table = SymbolTable(parent=previous_symbol_table)
         loop_var = self.current_token.value
         if self.symbol_table.lookup(loop_var):
             self.error(f"Loop variable '{loop_var}' already defined. Please choose another name.")
@@ -337,6 +354,7 @@ class Parser:
         self.consume('COLON')
         self.consume('NEWLINE')
         body = self.statement_block()
+        self.symbol_table = previous_symbol_table
         return ast.For(
             target=ast.Name(id=loop_var, ctx=ast.Store()),
             iter=iterable,
@@ -349,7 +367,10 @@ class Parser:
         condition = self.condition()
         self.consume('COLON')
         self.consume('NEWLINE')
+        previous_symbol_table = self.symbol_table
+        self.symbol_table = SymbolTable(parent=previous_symbol_table)
         body = self.statement_block()
+        self.symbol_table = previous_symbol_table
         return ast.While(
             test=condition,
             body=body,

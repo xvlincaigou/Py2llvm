@@ -10,3 +10,16 @@ else:
 		print('True')
 	else:
 		print('False')
+
+t = 'racecarle'
+if len(t) <= 1:
+	print('True')
+else:
+	bool = 1
+	for i in range(len(t) // 2):
+		if t[i] != t[len(t) - i - 1]:
+			bool = 0
+	if bool != 0:
+		print('True')
+	else:
+		print('False')

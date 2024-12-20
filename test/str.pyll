@@ -1,2 +1,0 @@
-welcome = 'Hello world!'
-print(welcome[1])
