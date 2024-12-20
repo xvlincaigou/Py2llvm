@@ -1,0 +1,79 @@
+{
+    "body": [
+        {
+            "targets": [
+                {
+                    "id": "s",
+                    "ctx": {
+                        "type": "Store"
+                    },
+                    "type": "Name"
+                }
+            ],
+            "value": {
+                "value": "aabbcc",
+                "type": "Constant"
+            },
+            "type": "Assign"
+        },
+        {
+            "test": {
+                "left": {
+                    "func": {
+                        "id": "len",
+                        "ctx": {
+                            "type": "Load"
+                        },
+                        "type": "Name"
+                    },
+                    "args": [
+                        {
+                            "id": "s",
+                            "ctx": {
+                                "type": "Load"
+                            },
+                            "type": "Name"
+                        }
+                    ],
+                    "keywords": [],
+                    "type": "Call"
+                },
+                "ops": [
+                    {
+                        "type": "Gt"
+                    }
+                ],
+                "comparators": [
+                    {
+                        "value": 1,
+                        "type": "Constant"
+                    }
+                ],
+                "type": "Compare"
+            },
+            "body": [
+                {
+                    "func": {
+                        "id": "print",
+                        "ctx": {
+                            "type": "Load"
+                        },
+                        "type": "Name"
+                    },
+                    "args": [
+                        {
+                            "value": "True",
+                            "type": "Constant"
+                        }
+                    ],
+                    "keywords": [],
+                    "type": "Call"
+                }
+            ],
+            "orelse": [],
+            "type": "If"
+        }
+    ],
+    "type_ignores": [],
+    "type": "Module"
+}

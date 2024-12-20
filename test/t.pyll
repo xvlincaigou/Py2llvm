@@ -1,0 +1,6 @@
+x = [1,2,3,4,5]
+y = "hello"
+a = len(x)
+b = len(y)
+print(a)
+print(b)
