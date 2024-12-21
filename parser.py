@@ -143,7 +143,7 @@ class Parser:
     def assignment_statement(self):
         if self.current_token.type == 'ARRAY_MEMBER':
             var_name = self.array_member(ctx=ast.Store())
-            targets = [ast.Subscript(value=var_name.value, slice=var_name.slice, ctx=ast.Store())]
+            targets = [ast.Subscript(value=var_name.value, slice=var_name.slice, ctx=ast.Store(), lineno=var_name.lineno, col_offset=var_name.col_offset)]
             symbol = None
         else:
             var_name = self.current_token.value
@@ -155,7 +155,7 @@ class Parser:
                 # 变量未定义，添加到符号表，暂时我们还不知道类型
                 self.symbol_table.define(var_name, 'variable')
                 symbol = self.symbol_table.lookup(var_name)
-            targets = [ast.Name(id=var_name, ctx=ast.Store())]
+            targets = [ast.Name(id=var_name, ctx=ast.Store(), lineno=self.current_token.line, col_offset=self.current_token.column)]
             self.consume('IDENTIFIER')
         
         self.consume('ASSIGN')
@@ -186,7 +186,9 @@ class Parser:
 
         return ast.Assign(
             targets=targets,
-            value=value
+            value=value,
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
 
     def function_definition(self):
@@ -211,12 +213,12 @@ class Parser:
                 if self.current_token.type != 'IDENTIFIER':
                     self.error("Expected type name after colon.")
                 param_type = self.current_token.value
-                param_annotations.append(ast.Name(id=param_type, ctx=ast.Load()))
+                param_annotations.append(ast.Name(id=param_type, ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column))
                 self.consume('IDENTIFIER')
                 # 定义参数符号表项
                 self.symbol_table.define(param_name, 'parameter', data_type=param_type)
             else:
-                param_annotations.append(ast.Name(id='int', ctx=ast.Load()))
+                param_annotations.append(ast.Name(id='int', ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column))
                 self.symbol_table.define(param_name, 'parameter', data_type='int')
             params.append(param_name)
             while self.current_token.type == 'COMMA':
@@ -230,11 +232,11 @@ class Parser:
                     if self.current_token.type != 'IDENTIFIER':
                         self.error("Expected type name after colon.")
                     param_type = self.current_token.value
-                    param_annotations.append(ast.Name(id=param_type, ctx=ast.Load()))
+                    param_annotations.append(ast.Name(id=param_type, ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column))
                     self.consume('IDENTIFIER')
                     self.symbol_table.define(param_name, 'parameter', data_type=param_type)
                 else:
-                    param_annotations.append(ast.Name(id='int', ctx=ast.Load()))
+                    param_annotations.append(ast.Name(id='int', ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column))
                     self.symbol_table.define(param_name, 'parameter', data_type='int')
                 params.append(param_name)
 
@@ -268,7 +270,9 @@ class Parser:
             ),
             body=body,
             decorator_list=[],
-            returns=None
+            returns=None,
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
 
     def if_statement(self):
@@ -306,7 +310,9 @@ class Parser:
             false_branches.append(ast.If(
                 test=elif_condition,
                 body=elif_branch,
-                orelse=[]
+                orelse=[],
+                lineno=elif_condition.lineno,
+                col_offset=elif_condition.col_offset
             ))
 
         orelse = []
@@ -330,15 +336,18 @@ class Parser:
             orelse = [ast.If(
                 test=false_branch.test,
                 body=false_branch.body,
-                orelse=orelse
+                orelse=orelse,
+                lineno=false_branch.lineno,
+                col_offset=false_branch.col_offset
             )]
 
         return ast.If(
             test=condition,
             body=true_branch,
-            orelse=orelse
+            orelse=orelse,
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
-
 
     def for_statement(self):
         self.consume('FOR')
@@ -356,10 +365,12 @@ class Parser:
         body = self.statement_block()
         self.symbol_table = previous_symbol_table
         return ast.For(
-            target=ast.Name(id=loop_var, ctx=ast.Store()),
+            target=ast.Name(id=loop_var, ctx=ast.Store(), lineno=self.current_token.line, col_offset=self.current_token.column),
             iter=iterable,
             body=body,
-            orelse=[]
+            orelse=[],
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
 
     def while_statement(self):
@@ -374,13 +385,15 @@ class Parser:
         return ast.While(
             test=condition,
             body=body,
-            orelse=[]
+            orelse=[],
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
 
     def return_statement(self):
         self.consume('RETURN')
         value = self.expression()
-        return ast.Return(value=value)
+        return ast.Return(value=value, lineno=self.current_token.line, col_offset=self.current_token.column)
 
     def function_call(self):
         func_name = self.current_token.value
@@ -395,9 +408,11 @@ class Parser:
                 self.consume('COMMA')
         self.consume('RPAREN')
         return ast.Call(
-            func=ast.Name(id=func_name, ctx=ast.Load()),
+            func=ast.Name(id=func_name, ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column),
             args=args,
-            keywords=[]
+            keywords=[],
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
     
     def array_member(self, ctx=ast.Load()):
@@ -420,7 +435,9 @@ class Parser:
         return ast.Subscript(
             value=ast.Name(id=array_name, ctx=ast.Load()),
             slice=ast.Index(value=index),
-            ctx=ctx
+            ctx=ctx,
+            lineno=self.current_token.line,
+            col_offset=self.current_token.column
         )
     
     # 这个时候开头的必然是INDENT
@@ -454,7 +471,7 @@ class Parser:
             op = self.current_token.value  # 记录逻辑操作符
             self.consume(self.current_token.type)  # 消耗逻辑操作符
             right = self.comparison()  # 继续解析后面的比较表达式
-            left = ast.BoolOp(op=ast.And() if op == 'and' else ast.Or(), values=[left, right])  # 构建逻辑操作的AST节点
+            left = ast.BoolOp(op=ast.And() if op == 'and' else ast.Or(), values=[left, right], lineno=left.lineno,col_offset=left.col_offset)  # 构建逻辑操作的AST节点
         return left
 
     def comparison(self):
@@ -468,17 +485,17 @@ class Parser:
             right = self.expression()  # 解析右侧表达式
             # 根据操作符构建比较操作AST节点
             if op == '==':
-                return ast.Compare(left=left, ops=[ast.Eq()], comparators=[right])
+                return ast.Compare(left=left, ops=[ast.Eq()], comparators=[right],lineno=left.lineno,col_offset=left.col_offset)
             elif op == '!=':
-                return ast.Compare(left=left, ops=[ast.NotEq()], comparators=[right])
+                return ast.Compare(left=left, ops=[ast.NotEq()], comparators=[right], lineno=left.lineno,col_offset=left.col_offset)
             elif op == '>':
-                return ast.Compare(left=left, ops=[ast.Gt()], comparators=[right])
+                return ast.Compare(left=left, ops=[ast.Gt()], comparators=[right], lineno=left.lineno,col_offset=left.col_offset)
             elif op == '<':
-                return ast.Compare(left=left, ops=[ast.Lt()], comparators=[right])
+                return ast.Compare(left=left, ops=[ast.Lt()], comparators=[right], lineno=left.lineno,col_offset=left.col_offset)
             elif op == '>=':
-                return ast.Compare(left=left, ops=[ast.GtE()], comparators=[right])
+                return ast.Compare(left=left, ops=[ast.GtE()], comparators=[right], lineno=left.lineno,col_offset=left.col_offset)
             elif op == '<=':
-                return ast.Compare(left=left, ops=[ast.LtE()], comparators=[right])
+                return ast.Compare(left=left, ops=[ast.LtE()], comparators=[right], lineno=left.lineno,col_offset=left.col_offset)
         return left  # 如果没有比较操作符，返回当前的表达式
 
     def expression(self):
@@ -494,7 +511,7 @@ class Parser:
             return self.list_expr()
         
         if self.current_token.type == 'TRUE' or self.current_token.type == 'FALSE':
-            node = ast.Constant(value=True if self.current_token.type == 'TRUE' else False)
+            node = ast.Constant(value=True if self.current_token.type == 'TRUE' else False, lineno=self.current_token.line, col_offset=self.current_token.column)
             self.consume(self.current_token.type)
             return node
         
@@ -507,9 +524,9 @@ class Parser:
                 right = self.term()  # 解析下一个TERM
                 # 构建加法或减法的AST节点
                 if op == '+':
-                    left = ast.BinOp(left=left, op=ast.Add(), right=right)
+                    left = ast.BinOp(left=left, op=ast.Add(), right=right, lineno=left.lineno,col_offset=left.col_offset)
                 elif op == '-':
-                    left = ast.BinOp(left=left, op=ast.Sub(), right=right)
+                    left = ast.BinOp(left=left, op=ast.Sub(), right=right, lineno=left.lineno,col_offset=left.col_offset)
             return left
 
         self.error(f'Unexpected token: {self.current_token.type}')
@@ -525,7 +542,7 @@ class Parser:
             if self.current_token.type == 'COMMA':
                 self.consume('COMMA')
         self.consume('RBRACKET')
-        return ast.List(elts=elements, ctx=ast.Load())
+        return ast.List(elts=elements, ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column)
 
     def term(self):
         """
@@ -538,9 +555,9 @@ class Parser:
             right = self.factor()  # 解析下一个因子
             # 构建乘法或除法的AST节点
             if op == '*':
-                left = ast.BinOp(left=left, op=ast.Mult(), right=right)
+                left = ast.BinOp(left=left, op=ast.Mult(), right=right, lineno=left.lineno,col_offset=left.col_offset)
             elif op == '//':
-                left = ast.BinOp(left=left, op=ast.FloorDiv(), right=right)
+                left = ast.BinOp(left=left, op=ast.FloorDiv(), right=right, lineno=left.lineno,col_offset=left.col_offset)
         return left
 
     def factor(self):
@@ -550,14 +567,14 @@ class Parser:
         if self.current_token.type == 'NUMBER':  # 如果是数字
             value = int(self.current_token.value)  # 转换为整数
             self.consume('NUMBER')
-            return ast.Constant(value=value)
+            return ast.Constant(value=value, lineno=self.current_token.line, col_offset=self.current_token.column)
         elif self.current_token.type == 'IDENTIFIER':  # 如果是标识符
             value = self.current_token.value  # 获取标识符值
             symbol = self.symbol_table.lookup(value)
             if not symbol:
                 self.error(f"Undefined variable '{value}', please define it first.")
             self.consume('IDENTIFIER')
-            return ast.Name(id=value, ctx=ast.Load())
+            return ast.Name(id=value, ctx=ast.Load(), lineno=self.current_token.line, col_offset=self.current_token.column)
         elif self.current_token.type == 'LPAREN':  # 如果是括号，递归解析表达式
             self.consume('LPAREN')
             expr = self.expression()

@@ -457,12 +457,22 @@ if __name__ == '__main__':
         sys.exit(1)
     
     filename = sys.argv[1]
+
+    RED = '\033[31m'
+    RESET = '\033[0m'
+    
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             code = f.read()
         
         # 解析 Python 源代码为 AST
-        parsed_ast = ast.parse(code, filename=filename)
+        # parsed_ast = ast.parse(code, filename=filename)
+        from lexer import Lexer
+        lexer = Lexer(code)
+        tokens = lexer.tokenize()
+        from parser import Parser
+        parser = Parser(tokens)
+        parsed_ast = parser.parse()
         
         # 创建 Visitor 实例并遍历 AST
         visitor = Visitor('main', filename)
@@ -477,11 +487,11 @@ if __name__ == '__main__':
             print(line)
     
     except CompilerError as e:
-        print(f"【Error】: {e}")
+        print(f"{RED}Compiler error: {e}{RESET}")
         sys.exit(1)
     except FileNotFoundError:
-        print(f"【Error】: File '{filename}' not found.")
+        print(f"{RED}File error: File '{filename}' not found.{RESET}")
         sys.exit(1)
     except Exception as e:
-        print(f"【Unexpected error】: {e}")
+        print(f"{RED}Unexpected error: {e}{RESET}")
         sys.exit(1)
