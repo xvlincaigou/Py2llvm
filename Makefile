@@ -7,6 +7,7 @@ $(OUTPUT): generated.ll
 	python3 PyLL.py $(FILE)
 	clang -O3 -S -emit-llvm comp.c -o comp.ll
 	clang generated.ll comp.ll -o $(OUTPUT)
+	rm -f generated.ll comp.ll
 
 generated.ll: comp.c
 	clang -O3 -S -emit-llvm comp.c -o generated.ll

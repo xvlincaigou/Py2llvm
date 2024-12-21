@@ -28,7 +28,7 @@ class Parser:
             if self.current_token_index < len(self.tokens):
                 self.current_token = self.tokens[self.current_token_index]
         else:
-            self.error()
+            self.error(message=f"Expected token type {token_type}, but got {self.current_token.type}.")
 
     def tab2indent_level(self, token):
         indent_size = token.value.count('\t') * 4 + token.value.count(' ')
@@ -450,7 +450,7 @@ class Parser:
         statements = []
         while self.current_token.type == 'INDENT':
             if self.tab2indent_level(self.current_token) > self.indent_level:
-                self.error()
+                self.error("Wrong indent level.")
             elif self.tab2indent_level(self.current_token) < self.indent_level:
                 self.indent_level -= 1
                 return statements

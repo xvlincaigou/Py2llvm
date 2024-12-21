@@ -32,8 +32,7 @@ class Lexer:
             if self.tokens and self.tokens[-1].type == 'UNKNOWN':
                 RED = '\033[31m'
                 RESET = '\033[0m'
-                print(f"{RED}Error:{RESET} Unknown token at line {self.current_line}, column {self.current_column}, character '{self.tokens[-1].value}'")
-                print(f"{RED}Exiting 1{RESET}")
+                print(f"{RED}Error: Unknown token at line {self.current_line}, column {self.current_column}, character '{self.tokens[-1].value}'{RESET}")
                 exit(1)
 
         self.tokens.append(Token(self.pos, 'EOF', None, self.current_line, self.current_column))
